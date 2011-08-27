@@ -201,7 +201,8 @@ class Parser(object):
             return self._tokens.pop()
 
     def _peek_token(self):
-        return self._tokens[-1]
+        if self._tokens:
+            return self._tokens[-1]
 
     def _peek_tokens(self, i=0):
         return self._tokens[-i:]
@@ -217,14 +218,16 @@ class Parser(object):
     def _expect_object(self, token):
         obj = Object(token.value)
         self.obj_stack.append(obj)
-        self._expect('{')
-        while True:
-            token = self._peek_token()
-            if token.value == '}':
-                self._pop_token()
-                self._finish_object()
-                break
-            self._parse_statement()
+
+        if self._peek_token() is not None:
+            self._expect('{')
+            while True:
+                token = self._peek_token()
+                if token.value == '}':
+                    self._pop_token()
+                    self._finish_object()
+                    break
+                self._parse_statement()
         return obj
 
     def _eval_prop_value(self, pspec, v):

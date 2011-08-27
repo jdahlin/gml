@@ -22,6 +22,11 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(len(p.objects), 1)
         self.failUnless(isinstance(p.objects[0], gtk.Button))
 
+        p = Parser()
+        p.parse("GtkButton")
+        self.assertEquals(len(p.objects), 1)
+        self.failUnless(isinstance(p.objects[0], gtk.Button))
+
     def testMultiToplevel(self):
         p = Parser()
         p.parse('GtkWindow { id: "w1" } GtkWindow { id: "w2" }')
