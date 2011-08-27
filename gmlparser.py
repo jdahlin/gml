@@ -122,7 +122,7 @@ class Parser(object):
         for prop in obj.properties:
             name = prop.name
             if name == 'id':
-                obj_id = prop.value[1:-1]
+                obj_id = prop.value
                 continue
 
             if name.startswith('_'):

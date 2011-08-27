@@ -35,7 +35,7 @@ class ParserTest(unittest.TestCase):
 
     def testMultiToplevel(self):
         p = Parser()
-        p.parse('GtkWindow { id: "w1" } GtkWindow { id: "w2" }')
+        p.parse('GtkWindow { id: w1 } GtkWindow { id: w2 }')
         self.assertEquals(len(p.objects), 2)
         w1 = p.get_by_name("w1")
         self.failUnless(isinstance(w1, gtk.Window))
@@ -44,7 +44,7 @@ class ParserTest(unittest.TestCase):
 
     def testNested(self):
         p = Parser()
-        p.parse("GtkWindow { id: \"w1\"; GtkButton { } }")
+        p.parse("GtkWindow { id: w1; GtkButton { } }")
         win = p.get_by_name('w1')
         self.failUnless(isinstance(win, gtk.Window))
         children = win.get_children()
@@ -71,13 +71,13 @@ class ParserTest(unittest.TestCase):
 
     def testPropertyEnum(self):
         p = Parser()
-        p.parse('GtkScrolledWindow { id: "sw1"; hscrollbar_policy: automatic }')
+        p.parse('GtkScrolledWindow { id: sw1; hscrollbar_policy: automatic }')
         sw = p.get_by_name("sw1")
         self.assertEquals(sw.props.hscrollbar_policy, gtk.POLICY_AUTOMATIC)
 
         p = Parser()
         p.parse("""GtkScrolledWindow {
-            id: "sw1"
+            id: sw1
             hscrollbar_policy: GtkPolicyType.automatic
         }""")
         sw = p.get_by_name("sw1")
@@ -86,9 +86,9 @@ class ParserTest(unittest.TestCase):
     def testPropertyChild(self):
         p = Parser()
         p.parse("""GtkVBox {
-            id: "box"
+            id: box
             GtkButton {
-            id: "button"
+            id: button
                _expand: true
             }
         }""")
@@ -123,10 +123,10 @@ class ParserTest(unittest.TestCase):
         p = Parser()
         p.parse("""
         GtkWindow {
-           name: "window1"; GtkButton { id: "b1"; label: "Label" }
+           name: "window1"; GtkButton { id: b1; label: "Label" }
         }
-        GtkButton { id: "b2"; label: b1.label }
-        GtkButton { id: "b3"; label: b1.parent.name }
+        GtkButton { id: b2; label: b1.label }
+        GtkButton { id: b3; label: b1.parent.name }
         """)
 
         b1 = p.get_by_name("b1")
@@ -140,13 +140,13 @@ class ParserTest(unittest.TestCase):
         p = Parser()
         p.parse("""
         GtkButton {
-            id: "b1"
+            id: b1
             label: "gtk-new"
             use_stock: true
             image.pixel_size: 32
         }
         GtkButton {
-            id: "b2"
+            id: b2
             label: "gtk-new"
             use_stock: true
             image { pixel_size: 64
@@ -163,7 +163,7 @@ class ParserTest(unittest.TestCase):
         p = Parser()
         p.parse("""
         GtkButton {
-            id: "b1"
+            id: b1
             image: GtkImage { stock: "gtk-edit" }
         }
         """)
@@ -173,11 +173,11 @@ class ParserTest(unittest.TestCase):
         p = Parser()
         p.parse("""
         GtkButton {
-            id: "b1"
+            id: b1
             image: GtkImage { stock: "gtk-edit" }
         }
         GtkButton {
-            id: "b2"
+            id: b2
             label: "gtk-edit"
             image: GtkImage { stock: b1.image.stock }
         }
@@ -195,7 +195,7 @@ class ParserTest(unittest.TestCase):
         p.signals['activate'] = activate
         p.parse("""
         GtkAction {
-          id: "a"
+          id: a
           activate:: activate
         }
         """)
@@ -210,7 +210,7 @@ class BoxTest(unittest.TestCase):
     def testChildren(self):
         p = Parser()
         p.parse("""GtkWindow {
-          id: "w1"
+          id: w1
           GtkVBox {
             GtkButton {}
             GtkLabel {}

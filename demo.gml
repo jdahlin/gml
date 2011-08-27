@@ -4,7 +4,7 @@ GtkListStore {
 }
 
 GtkWindow {
-    id: "window1"
+    id: window1
     default_height: 250
     default_width: 440
     title: "GtkBuilder demo"
@@ -20,7 +20,7 @@ GtkWindow {
         }
 
         GtkScrolledWindow {
-            id: "scrolledwindow1"
+            id: scrolledwindow1
             hscrollbar_policy: GtkPolicyType.automatic
             vscrollbar_policy: automatic
             shadow_type: GtkShadowType.in
@@ -30,7 +30,7 @@ GtkWindow {
             }
         }
         GtkStatusbar {
-            id: "statusbar1"
+            id: statusbar1
             _expand: false
         }
     }
