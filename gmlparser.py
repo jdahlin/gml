@@ -148,16 +148,7 @@ class GMLParser(object):
                 else:
                     self._expect_property(obj, token)
             elif next.value == '.':
-                self._pop_token()
-                tokens = []
-                tokens.append(token)
-                while True:
-                    token = self._peek_token()
-                    if token.value == ':':
-                        break
-                    tokens.append(self._pop_token())
-                v = '.'.join(t.value for t in tokens)
-                token = Token(token.kind, v, 0, 0)
+                token = self._parse_property_reference(token)
                 self._expect_property(obj, token)
             elif token.value == ';':
                 pass
@@ -175,6 +166,18 @@ class GMLParser(object):
                 break
 
         return obj
+
+    def _parse_property_reference(self, token):
+        self._pop_token()
+        tokens = []
+        tokens.append(token)
+        while True:
+            token = self._peek_token()
+            if token.value == ':':
+                break
+            tokens.append(self._pop_token())
+        v = '.'.join(t.value for t in tokens)
+        return Token(token.kind, v, 0, 0)
 
     def _parse_property_value(self):
         tokens = []
