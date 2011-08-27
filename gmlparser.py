@@ -220,8 +220,9 @@ class GMLParser(object):
 class DelayedProperty(Exception):
     pass
 
-class GMLBuilder(object):
+class GMLBuilder(gtk.Builder):
     def __init__(self):
+        gtk.Builder.__init__(self)
         self._objects = {}
         self.signals = {}
         self._delayed_properties = []
@@ -271,7 +272,7 @@ class GMLBuilder(object):
             self._objects[obj_id] = inst
 
             if parent is not None and not obj.is_property:
-                parent.add(inst)
+                gtk.Buildable.add_child(parent, self, inst, None)
         else:
             for name, value in properties.items():
                 inst.set_property(name, value)
@@ -281,15 +282,16 @@ class GMLBuilder(object):
             inst.connect(signal.name, self.signals[signal.handler])
 
         # Children
-        for child in obj.children:
-            child_inst, child_props = self._construct_object(child, inst)
-            child_pspecs = {}
-            for pspec in inst.list_child_properties():
-                child_pspecs[pspec.name] = pspec
-            for prop_name, value in child_props.items():
-                pspec = child_pspecs[prop_name]
-                value = self._eval_prop_value(pspec, value)
-                inst.child_set_property(child_inst, prop_name, value)
+        if isinstance(inst, gtk.Container):
+            for child in obj.children:
+                child_inst, child_props = self._construct_object(child, inst)
+                child_pspecs = {}
+                for pspec in inst.list_child_properties():
+                    child_pspecs[pspec.name] = pspec
+                for prop_name, value in child_props.items():
+                    pspec = child_pspecs[prop_name]
+                    value = self._eval_prop_value(pspec, value)
+                    inst.child_set_property(child_inst, prop_name, value)
 
         # Delayed_properties
         for prop in delayed_properties:

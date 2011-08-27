@@ -1,6 +1,9 @@
 # // -*- mode: javascript -*-
 GtkListStore {
     id: liststore1
+#    columns: [gchararray, gint]
+#    rows: [["John Doe", 33],
+#           ["Jane Doe", 29]]
 }
 
 GtkWindow {
