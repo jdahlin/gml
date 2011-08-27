@@ -2,40 +2,40 @@ import unittest
 
 import gtk
 
-from gmlparser import Parser
+from gmlparser import GMLBuilder
 
 
-class ParserTest(unittest.TestCase):
+class GMLBuilderTest(unittest.TestCase):
     def testEmpty(self):
-        p = Parser()
-        p.parse("")
+        p = GMLBuilder()
+        p.add_from_string("")
         self.assertEquals(p.objects, [])
 
     def testComment(self):
-        p = Parser()
-        p.parse("# This is a comment")
+        p = GMLBuilder()
+        p.add_from_string("# This is a comment")
         self.assertEquals(p.objects, [])
 
     def testSimple(self):
-        p = Parser()
-        p.parse("GtkButton {}")
+        p = GMLBuilder()
+        p.add_from_string("GtkButton {}")
         self.assertEquals(len(p.objects), 1)
 
-        p = Parser()
-        p.parse("GtkButton")
+        p = GMLBuilder()
+        p.add_from_string("GtkButton")
         self.assertEquals(len(p.objects), 1)
 
-        p = Parser()
-        p.parse("GtkButton; GtkButton")
+        p = GMLBuilder()
+        p.add_from_string("GtkButton; GtkButton")
         self.assertEquals(len(p.objects), 2)
 
-        p = Parser()
-        p.parse("GtkButton {}; GtkButton; GtkButton {}")
+        p = GMLBuilder()
+        p.add_from_string("GtkButton {}; GtkButton; GtkButton {}")
         self.assertEquals(len(p.objects), 3)
 
     def testMultiToplevel(self):
-        p = Parser()
-        p.parse('GtkWindow { id: w1 } GtkWindow { id: w2 }')
+        p = GMLBuilder()
+        p.add_from_string('GtkWindow { id: w1 } GtkWindow { id: w2 }')
         self.assertEquals(len(p.objects), 2)
         w1 = p.get_by_name("w1")
         self.failUnless(isinstance(w1, gtk.Window))
@@ -43,8 +43,8 @@ class ParserTest(unittest.TestCase):
         self.failUnless(isinstance(w2, gtk.Window))
 
     def testNested(self):
-        p = Parser()
-        p.parse("GtkWindow { id: w1; GtkButton { } }")
+        p = GMLBuilder()
+        p.add_from_string("GtkWindow { id: w1; GtkButton { } }")
         win = p.get_by_name('w1')
         self.failUnless(isinstance(win, gtk.Window))
         children = win.get_children()
@@ -54,29 +54,29 @@ class ParserTest(unittest.TestCase):
         self.failUnless(isinstance(button, gtk.Button))
 
     def testPropertyString(self):
-        p = Parser()
-        p.parse('GtkButton { label: "Label" }')
+        p = GMLBuilder()
+        p.add_from_string('GtkButton { label: "Label" }')
         self.assertEquals(len(p.objects), 1)
         button = p.objects[0]
         self.failUnless(isinstance(button, gtk.Button))
         self.assertEquals(button.get_label(), "Label")
 
     def testPropertyBool(self):
-        p = Parser()
-        p.parse('GtkButton { use_underline: true }')
+        p = GMLBuilder()
+        p.add_from_string('GtkButton { use_underline: true }')
         self.assertEquals(len(p.objects), 1)
         button = p.objects[0]
         self.failUnless(isinstance(button, gtk.Button))
         self.assertEquals(button.props.use_underline, True)
 
     def testPropertyEnum(self):
-        p = Parser()
-        p.parse('GtkScrolledWindow { id: sw1; hscrollbar_policy: automatic }')
+        p = GMLBuilder()
+        p.add_from_string('GtkScrolledWindow { id: sw1; hscrollbar_policy: automatic }')
         sw = p.get_by_name("sw1")
         self.assertEquals(sw.props.hscrollbar_policy, gtk.POLICY_AUTOMATIC)
 
-        p = Parser()
-        p.parse("""GtkScrolledWindow {
+        p = GMLBuilder()
+        p.add_from_string("""GtkScrolledWindow {
             id: sw1
             hscrollbar_policy: GtkPolicyType.automatic
         }""")
@@ -84,8 +84,8 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(sw.props.hscrollbar_policy, gtk.POLICY_AUTOMATIC)
 
     def testPropertyChild(self):
-        p = Parser()
-        p.parse("""GtkVBox {
+        p = GMLBuilder()
+        p.add_from_string("""GtkVBox {
             id: box
             GtkButton {
             id: button
@@ -97,8 +97,8 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(box.child_get_property(button, "expand"), True)
 
     def testPropertyMultiple(self):
-        p = Parser()
-        p.parse("""GtkButton {
+        p = GMLBuilder()
+        p.add_from_string("""GtkButton {
           label: "Label"
           use_underline:  true
         }""")
@@ -109,8 +109,8 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(button.props.use_underline, True)
 
     def testPropertyMultipleSemiColon(self):
-        p = Parser()
-        p.parse("""GtkButton {
+        p = GMLBuilder()
+        p.add_from_string("""GtkButton {
           label: "Label"; use_underline: true
         }""")
         self.assertEquals(len(p.objects), 1)
@@ -120,8 +120,8 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(button.props.use_underline, True)
 
     def testPropertyReference(self):
-        p = Parser()
-        p.parse("""
+        p = GMLBuilder()
+        p.add_from_string("""
         GtkWindow {
            name: "window1"; GtkButton { id: b1; label: "Label" }
         }
@@ -137,8 +137,8 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(b3.props.label, "window1")
 
     def testPropertyNestedReference(self):
-        p = Parser()
-        p.parse("""
+        p = GMLBuilder()
+        p.add_from_string("""
         GtkButton {
             id: b1
             label: "gtk-new"
@@ -160,8 +160,8 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(b2.get_image().get_stock()[0], "gtk-edit")
 
     def testPropertyNew(self):
-        p = Parser()
-        p.parse("""
+        p = GMLBuilder()
+        p.add_from_string("""
         GtkButton {
             id: b1
             image: GtkImage { stock: "gtk-edit" }
@@ -170,8 +170,8 @@ class ParserTest(unittest.TestCase):
         b1 = p.get_by_name("b1")
         self.assertEquals(b1.get_image().get_stock()[0], "gtk-edit")
 
-        p = Parser()
-        p.parse("""
+        p = GMLBuilder()
+        p.add_from_string("""
         GtkButton {
             id: b1
             image: GtkImage { stock: "gtk-edit" }
@@ -191,9 +191,9 @@ class ParserTest(unittest.TestCase):
         self.called = False
         def activate(action):
             self.called = True
-        p = Parser()
+        p = GMLBuilder()
         p.signals['activate'] = activate
-        p.parse("""
+        p.add_from_string("""
         GtkAction {
           id: a
           activate:: activate
@@ -208,8 +208,8 @@ class ParserTest(unittest.TestCase):
 
 class BoxTest(unittest.TestCase):
     def testChildren(self):
-        p = Parser()
-        p.parse("""GtkWindow {
+        p = GMLBuilder()
+        p.add_from_string("""GtkWindow {
           id: w1
           GtkVBox {
             GtkButton

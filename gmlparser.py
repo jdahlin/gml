@@ -5,6 +5,7 @@ import tokenize
 import gobject
 import gtk
 
+# Parser
 
 class Token(object):
     def __init__(self, kind, value, start, end):
@@ -61,27 +62,14 @@ def is_comment(token):
         return True
     return False
 
-class DelayedProperty(Exception):
-    pass
 
-class Parser(object):
+class GMLParser(object):
     def __init__(self):
         self._eof = False
         self._tokens = []
-        self._delayed_properties = []
-        self.signals = {}
-        self._objects = {}
         self.obj_stack = []
 
-    def parse(self, buffer):
-        fp = StringIO.StringIO(buffer)
-        self._parse(fp)
-
-    def parse_filename(self, filename):
-        fp = open(filename)
-        self._parse(fp)
-
-    def _parse(self, fp):
+    def parse(self, fp):
         # Pass 1: remove comments
         tokenize.tokenize(fp.readline, self.feed)
 
@@ -97,11 +85,143 @@ class Parser(object):
             else:
                 raise Exception("Unexpected object: %s" % (retval, ))
 
-        # Pass 3: construct UI
-        for obj in objects:
-            self._construct_object(obj)
+        return objects
+    # Parser below
 
-        self._apply_delayed_properties()
+    def feed(self, token, value, start, end, raw):
+        token = Token(token, value, start, end)
+        if is_whitespace(token) or is_comment(token):
+            return
+        self._tokens.insert(0, token)
+
+    def _pop_token(self):
+        if self._tokens:
+            return self._tokens.pop()
+
+    def _peek_token(self):
+        if self._tokens:
+            return self._tokens[-1]
+
+    def _peek_tokens(self, i=0):
+        return self._tokens[-i:]
+
+    def _peek_object(self):
+        return self.obj_stack[-1]
+
+    def _expect(self, value):
+        token = self._pop_token()
+        if token.value != value:
+            raise Exception("Expected %r, got %r" % (value, token.value))
+
+    def _parse_statement(self):
+        token = self._pop_token()
+        if token is None: # EOF
+            self._eof = True
+            return
+        if token.kind == tokenize.NAME:
+            next = self._peek_token()
+            if next is None:
+                self._eof = True
+            elif next.value == '{':
+                self._pop_token()
+                return self._parse_object_body(token)
+
+            return self._create_object(token)
+        elif token.value == ";":
+            pass
+        else:
+            raise Exception(token)
+
+    def _create_object(self, token, parent=None):
+        obj = Object(token.value)
+        self.obj_stack.append(obj)
+        if parent:
+            parent.children.append(obj)
+        return obj
+
+    def _parse_object_body(self, name_token, parent=None):
+        obj = self._create_object(name_token, parent)
+
+        token = self._pop_token()
+        opened = False
+        while token.value != '}':
+            next = self._peek_token()
+            if next.value == ':':
+                if len(self._tokens) > 2 and self._tokens[-2].value == ':':
+                    self._expect_signal(token)
+                else:
+                    self._expect_property(token)
+            elif next.value == '.':
+                self._pop_token()
+                tokens = []
+                tokens.append(token)
+                while True:
+                    token = self._peek_token()
+                    if token.value == ':':
+                        break
+                    tokens.append(self._pop_token())
+                v = '.'.join(t.value for t in tokens)
+                token = Token(token.kind, v, 0, 0)
+                self._expect_property(token)
+            elif token.value == ';':
+                pass
+            elif token.value == '{':
+                opened = True
+            else:
+                if opened or next.value == '{':
+                    child_parent = obj
+                else:
+                    child_parent = parent
+                self._parse_object_body(token, parent=child_parent)
+            token = self._pop_token()
+            if token is None:
+                self._eof = True
+                break
+
+        return obj
+
+    def _parse_property_value(self):
+        tokens = []
+        tokens.append(self._pop_token())
+        while True:
+            token = self._peek_token()
+            if token.value != '.':
+                break
+            self._pop_token()
+            tokens.append(self._pop_token())
+
+        return '.'.join(t.value for t in tokens)
+
+    def _expect_signal(self, token):
+        signal = token.value
+        self._expect(':')
+        self._expect(':')
+        handler = self._pop_token()
+        obj = self._peek_object()
+        obj.signals.append(Signal(signal, handler.value))
+
+    def _expect_property(self, token):
+        prop_name = token.value
+        self._expect(':')
+        prop_token = self._peek_token()
+        value = self._parse_property_value()
+        obj = self._peek_object()
+        if self._peek_token().value == '{':
+            value = self._parse_object_body(prop_token)
+            value.is_property = True
+
+        obj.properties.append(Property(prop_name, value))
+
+# Builder
+
+class DelayedProperty(Exception):
+    pass
+
+class GMLBuilder(object):
+    def __init__(self):
+        self._objects = {}
+        self.signals = {}
+        self._delayed_properties = []
 
     def _construct_object(self, obj, parent=None):
         if parent is not None:
@@ -237,131 +357,20 @@ class Parser(object):
                 return self._objects[v]
             return int(v)
 
-    # Parser below
+    def _parse_and_construct(self, fp):
+        parser = GMLParser()
+        for obj in parser.parse(fp):
+            self._construct_object(obj)
 
-    def feed(self, token, value, start, end, raw):
-        token = Token(token, value, start, end)
-        if is_whitespace(token) or is_comment(token):
-            return
-        self._tokens.insert(0, token)
+        self._apply_delayed_properties()
 
-    def _pop_token(self):
-        if self._tokens:
-            return self._tokens.pop()
+    def add_from_file(self, filename):
+        fp = open(filename)
+        self._parse_and_construct(fp)
 
-    def _peek_token(self):
-        if self._tokens:
-            return self._tokens[-1]
-
-    def _peek_tokens(self, i=0):
-        return self._tokens[-i:]
-
-    def _peek_object(self):
-        return self.obj_stack[-1]
-
-    def _expect(self, value):
-        token = self._pop_token()
-        if token.value != value:
-            raise Exception("Expected %r, got %r" % (value, token.value))
-
-    def _parse_statement(self):
-        token = self._pop_token()
-        if token is None: # EOF
-            self._eof = True
-            return
-        if token.kind == tokenize.NAME:
-            next = self._peek_token()
-            if next is None:
-                self._eof = True
-            elif next.value == '{':
-                self._pop_token()
-                return self._parse_object_body(token)
-
-            return self._create_object(token)
-        elif token.value == ";":
-            pass
-        else:
-            raise Exception(token)
-
-    def _create_object(self, token, parent=None):
-        obj = Object(token.value)
-        self.obj_stack.append(obj)
-        if parent:
-            parent.children.append(obj)
-        return obj
-
-    def _parse_object_body(self, name_token, parent=None):
-        obj = self._create_object(name_token, parent)
-
-        token = self._pop_token()
-        opened = False
-        while token.value != '}':
-            next = self._peek_token()
-            if next.value == ':':
-                if len(self._tokens) > 2 and self._tokens[-2].value == ':':
-                    self._expect_signal(token)
-                else:
-                    self._expect_property(token)
-            elif next.value == '.':
-                self._pop_token()
-                tokens = []
-                tokens.append(token)
-                while True:
-                    token = self._peek_token()
-                    if token.value == ':':
-                        break
-                    tokens.append(self._pop_token())
-                v = '.'.join(t.value for t in tokens)
-                token = Token(token.kind, v, 0, 0)
-                self._expect_property(token)
-            elif token.value == ';':
-                pass
-            elif token.value == '{':
-                opened = True
-            else:
-                if opened or next.value == '{':
-                    child_parent = obj
-                else:
-                    child_parent = parent
-                self._parse_object_body(token, parent=child_parent)
-            token = self._pop_token()
-            if token is None:
-                self._eof = True
-                break
-
-        return obj
-
-    def _parse_property_value(self):
-        tokens = []
-        tokens.append(self._pop_token())
-        while True:
-            token = self._peek_token()
-            if token.value != '.':
-                break
-            self._pop_token()
-            tokens.append(self._pop_token())
-
-        return '.'.join(t.value for t in tokens)
-
-    def _expect_signal(self, token):
-        signal = token.value
-        self._expect(':')
-        self._expect(':')
-        handler = self._pop_token()
-        obj = self._peek_object()
-        obj.signals.append(Signal(signal, handler.value))
-
-    def _expect_property(self, token):
-        prop_name = token.value
-        self._expect(':')
-        prop_token = self._peek_token()
-        value = self._parse_property_value()
-        obj = self._peek_object()
-        if self._peek_token().value == '{':
-            value = self._parse_object_body(prop_token)
-            value.is_property = True
-
-        obj.properties.append(Property(prop_name, value))
+    def add_from_string(self, string):
+        fp = StringIO.StringIO(string)
+        self._parse_and_construct(fp)
 
     def get_by_name(self, name):
         return self._objects.get(name)
@@ -370,12 +379,13 @@ class Parser(object):
     def objects(self):
         return self._objects.values()
 
-def main(args):
-    p = Parser()
-    p.signals["main_quit"] = gtk.main_quit
-    p.parse_filename(args[1])
 
-    for w in p.objects:
+def main(args):
+    gb = GMLBuilder()
+    gb.signals["main_quit"] = gtk.main_quit
+    gb.add_from_file(args[1])
+
+    for w in gb.objects:
         if isinstance(w, gtk.Window):
             w.show_all()
     gtk.main()
