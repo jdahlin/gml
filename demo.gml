@@ -1,4 +1,4 @@
-// -*- mode: javascript -*-
+# // -*- mode: javascript -*-
 GtkListStore {
     id: "liststore1"
 }
