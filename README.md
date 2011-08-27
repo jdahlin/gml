@@ -1,7 +1,7 @@
 # GML
 
 This is an experimental parser and runtime for a QML like markup language
-for Gtk+/Clutter.
+for Gtk+/Clutter. It is inspired by Qt's <http://en.wikipedia.org/wiki/QML>.
 
 # Syntax
 
@@ -43,3 +43,13 @@ GtkWindow {
 }
 ```
 
+You can reference properties with an id, for instance:
+
+```javascript
+GtkListStore {
+  id: liststore
+}
+GtkTreeView {
+  model: liststore
+}
+```
