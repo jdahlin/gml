@@ -65,7 +65,7 @@ GtkButton {
 }
 GtkButton {
   id: button2
-  label: b1.label
+  label: button1.label
 }
 ```
 

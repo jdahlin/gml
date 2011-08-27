@@ -1,6 +1,6 @@
 # // -*- mode: javascript -*-
 GtkListStore {
-    id: "liststore1"
+    id: liststore1
 }
 
 GtkWindow {
