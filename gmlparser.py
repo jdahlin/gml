@@ -67,7 +67,6 @@ class GMLParser(object):
     def __init__(self):
         self._eof = False
         self._tokens = []
-        self.obj_stack = []
 
     def parse(self, fp):
         # Pass 1: remove comments
@@ -86,6 +85,7 @@ class GMLParser(object):
                 raise Exception("Unexpected object: %s" % (retval, ))
 
         return objects
+
     # Parser below
 
     def feed(self, token, value, start, end, raw):
@@ -104,9 +104,6 @@ class GMLParser(object):
 
     def _peek_tokens(self, i=0):
         return self._tokens[-i:]
-
-    def _peek_object(self):
-        return self.obj_stack[-1]
 
     def _expect(self, value):
         token = self._pop_token()
@@ -134,7 +131,6 @@ class GMLParser(object):
 
     def _create_object(self, token, parent=None):
         obj = Object(token.value)
-        self.obj_stack.append(obj)
         if parent:
             parent.children.append(obj)
         return obj
@@ -148,9 +144,9 @@ class GMLParser(object):
             next = self._peek_token()
             if next.value == ':':
                 if len(self._tokens) > 2 and self._tokens[-2].value == ':':
-                    self._expect_signal(token)
+                    self._expect_signal(obj, token)
                 else:
-                    self._expect_property(token)
+                    self._expect_property(obj, token)
             elif next.value == '.':
                 self._pop_token()
                 tokens = []
@@ -162,7 +158,7 @@ class GMLParser(object):
                     tokens.append(self._pop_token())
                 v = '.'.join(t.value for t in tokens)
                 token = Token(token.kind, v, 0, 0)
-                self._expect_property(token)
+                self._expect_property(obj, token)
             elif token.value == ';':
                 pass
             elif token.value == '{':
@@ -192,20 +188,18 @@ class GMLParser(object):
 
         return '.'.join(t.value for t in tokens)
 
-    def _expect_signal(self, token):
+    def _expect_signal(self, obj, token):
         signal = token.value
         self._expect(':')
         self._expect(':')
         handler = self._pop_token()
-        obj = self._peek_object()
         obj.signals.append(Signal(signal, handler.value))
 
-    def _expect_property(self, token):
+    def _expect_property(self, obj, token):
         prop_name = token.value
         self._expect(':')
         prop_token = self._peek_token()
         value = self._parse_property_value()
-        obj = self._peek_object()
         if self._peek_token().value == '{':
             value = self._parse_object_body(prop_token)
             value.is_property = True
