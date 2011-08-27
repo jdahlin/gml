@@ -186,6 +186,24 @@ class GMLBuilderTest(unittest.TestCase):
         self.assertEquals(b2.get_label(), "gtk-edit")
         self.assertEquals(b2.get_image().get_stock()[0], "gtk-edit")
 
+    def testPropertyAfterChild(self):
+        p = GMLBuilder()
+        p.add_from_string("""
+        GtkVBox {
+          id: box
+          GtkMenuBar {
+            id: menubar
+            _expand: false
+            GtkMenuItem
+            _fill: false
+          }
+        }""")
+
+        box = p.get_by_name("box")
+        menubar = p.get_by_name("menubar")
+
+        self.assertEquals(box.child_get_property(menubar, 'expand'), False)
+        self.assertEquals(box.child_get_property(menubar, 'fill'), False)
 
     def testSignal(self):
         self.called = False

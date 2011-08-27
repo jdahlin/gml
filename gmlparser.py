@@ -120,8 +120,7 @@ class GMLParser(object):
             if next is None:
                 self._eof = True
             elif next.value == '{':
-                self._pop_token()
-                return self._parse_object_body(token)
+                return self._parse_object(token)
 
             return self._create_object(token)
         elif token.value == ";":
@@ -130,42 +129,60 @@ class GMLParser(object):
             raise Exception(token)
 
     def _create_object(self, token, parent=None):
+        #print '_create_object', token
         obj = Object(token.value)
         if parent:
             parent.children.append(obj)
         return obj
 
-    def _parse_object_body(self, name_token, parent=None):
+    def _parse_object(self, name_token, parent=None):
+        #print '_parse_object', name_token
         obj = self._create_object(name_token, parent)
-
+        self._expect('{')
         token = self._pop_token()
-        opened = False
         while token.value != '}':
             next = self._peek_token()
             if next.value == ':':
                 if len(self._tokens) > 2 and self._tokens[-2].value == ':':
-                    self._expect_signal(obj, token)
+                    self._parse_signal(obj, token)
                 else:
-                    self._expect_property(obj, token)
+                    self._parse_property(obj, token)
             elif next.value == '.':
                 token = self._parse_property_reference(token)
-                self._expect_property(obj, token)
+                self._parse_property(obj, token)
             elif token.value == ';':
                 pass
-            elif token.value == '{':
-                opened = True
+            elif next.value == '{':
+                self._parse_object(token, obj)
             else:
-                if opened or next.value == '{':
-                    child_parent = obj
-                else:
-                    child_parent = parent
-                self._parse_object_body(token, parent=child_parent)
+                simple = self._parse_object_simple(token, obj)
+                if simple is None:
+                    raise Exception(token)
             token = self._pop_token()
             if token is None:
                 self._eof = True
                 break
 
         return obj
+
+    def _parse_object_simple(self, token, parent=None):
+        if token.kind != tokenize.NAME:
+            return
+
+        obj = self._create_object(token, parent)
+        return obj
+
+    def _parse_property(self, obj, token):
+        #print '_parse_property', token
+        prop_name = token.value
+        self._expect(':')
+        prop_token = self._peek_token()
+        value = self._parse_property_value()
+        if self._peek_token().value == '{':
+            value = self._parse_object(prop_token)
+            value.is_property = True
+
+        obj.properties.append(Property(prop_name, value))
 
     def _parse_property_reference(self, token):
         self._pop_token()
@@ -191,23 +208,12 @@ class GMLParser(object):
 
         return '.'.join(t.value for t in tokens)
 
-    def _expect_signal(self, obj, token):
+    def _parse_signal(self, obj, token):
         signal = token.value
         self._expect(':')
         self._expect(':')
         handler = self._pop_token()
         obj.signals.append(Signal(signal, handler.value))
-
-    def _expect_property(self, obj, token):
-        prop_name = token.value
-        self._expect(':')
-        prop_token = self._peek_token()
-        value = self._parse_property_value()
-        if self._peek_token().value == '{':
-            value = self._parse_object_body(prop_token)
-            value.is_property = True
-
-        obj.properties.append(Property(prop_name, value))
 
 # Builder
 
