@@ -43,6 +43,8 @@ GtkWindow {
 }
 ```
 
+# References
+
 You can reference properties with an id, for instance:
 
 ```javascript
@@ -53,6 +55,21 @@ GtkTreeView {
   model: liststore
 }
 ```
+
+You can also reference objects by using a dot notation:
+
+```javascript
+GtkButton {
+  id: button1
+  label: "Label"
+}
+GtkButton {
+  id: button2
+  label: b1.label
+}
+```
+
+# Children
 
 GML has a child concept implemented by a few types:
 * GtkContainer
@@ -75,3 +92,24 @@ GtkWindow {
   }
 }
 ```
+
+GtkContainers supports the concept of child properties, they are currently implemented
+as underscore properties, eg:
+
+```javascript
+GtkWindow {
+  GtkVBox {
+    GtkButton {
+      _expand: true
+  }
+}
+```
+
+# Supported types
+
+* Strings: "string" or 'string'
+* Integers: 123
+* Floating point: 0.1
+* Boolean: true or false
+* Identifiers: button1
+* References: same as identifiers
