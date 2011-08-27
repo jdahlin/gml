@@ -53,3 +53,25 @@ GtkTreeView {
   model: liststore
 }
 ```
+
+GML has a child concept implemented by a few types:
+* GtkContainer
+
+To add an child to an object, you just create it:
+
+```javascript
+GtkWindow {
+  GtkVBox
+}
+```
+
+It can of course be nested:
+
+```javascript
+GtkWindow {
+  GtkVBox {
+    GtkButton
+    GtkLabel
+  }
+}
+```

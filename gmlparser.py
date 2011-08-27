@@ -283,15 +283,18 @@ class Parser(object):
         else:
             raise Exception(token)
 
-    def _create_object(self, token):
+    def _create_object(self, token, parent=None):
         obj = Object(token.value)
         self.obj_stack.append(obj)
+        if parent:
+            parent.children.append(obj)
         return obj
 
-    def _parse_object_body(self, name_token):
-        obj = self._create_object(name_token)
+    def _parse_object_body(self, name_token, parent=None):
+        obj = self._create_object(name_token, parent)
 
         token = self._pop_token()
+        opened = False
         while token.value != '}':
             next = self._peek_token()
             if next.value == ':':
@@ -314,14 +317,18 @@ class Parser(object):
             elif token.value == ';':
                 pass
             elif token.value == '{':
-                pass
+                opened = True
             else:
-                self._parse_object_body(token)
+                if opened or next.value == '{':
+                    child_parent = obj
+                else:
+                    child_parent = parent
+                self._parse_object_body(token, parent=child_parent)
             token = self._pop_token()
             if token is None:
                 self._eof = True
                 break
-        self._finish_object()
+
         return obj
 
     def _parse_property_value(self):
@@ -355,14 +362,6 @@ class Parser(object):
             value.is_property = True
 
         obj.properties.append(Property(prop_name, value))
-
-    def _finish_object(self):
-        if not self.obj_stack:
-            return
-        obj = self.obj_stack.pop()
-        if self.obj_stack:
-            parent = self.obj_stack[-1]
-            parent.children.append(obj)
 
     def get_by_name(self, name):
         return self._objects.get(name)

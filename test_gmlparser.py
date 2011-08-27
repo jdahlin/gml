@@ -212,11 +212,10 @@ class BoxTest(unittest.TestCase):
         p.parse("""GtkWindow {
           id: w1
           GtkVBox {
-            GtkButton {}
-            GtkLabel {}
+            GtkButton
+            GtkLabel
           }
         }""")
-        self.assertEquals(len(p.objects), 4)
         win = p.get_by_name("w1")
         self.failUnless(isinstance(win, gtk.Window))
         box = win.get_child()
