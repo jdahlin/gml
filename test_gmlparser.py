@@ -20,12 +20,18 @@ class ParserTest(unittest.TestCase):
         p = Parser()
         p.parse("GtkButton {}")
         self.assertEquals(len(p.objects), 1)
-        self.failUnless(isinstance(p.objects[0], gtk.Button))
 
         p = Parser()
         p.parse("GtkButton")
         self.assertEquals(len(p.objects), 1)
-        self.failUnless(isinstance(p.objects[0], gtk.Button))
+
+        p = Parser()
+        p.parse("GtkButton; GtkButton")
+        self.assertEquals(len(p.objects), 2)
+
+        p = Parser()
+        p.parse("GtkButton {}; GtkButton; GtkButton {}")
+        self.assertEquals(len(p.objects), 3)
 
     def testMultiToplevel(self):
         p = Parser()
@@ -39,7 +45,6 @@ class ParserTest(unittest.TestCase):
     def testNested(self):
         p = Parser()
         p.parse("GtkWindow { id: \"w1\"; GtkButton { } }")
-        self.assertEquals(len(p.objects), 2)
         win = p.get_by_name('w1')
         self.failUnless(isinstance(win, gtk.Window))
         children = win.get_children()
@@ -159,7 +164,16 @@ class ParserTest(unittest.TestCase):
         p.parse("""
         GtkButton {
             id: "b1"
-            label: "Test"
+            image: GtkImage { stock: "gtk-edit" }
+        }
+        """)
+        b1 = p.get_by_name("b1")
+        self.assertEquals(b1.get_image().get_stock()[0], "gtk-edit")
+
+        p = Parser()
+        p.parse("""
+        GtkButton {
+            id: "b1"
             image: GtkImage { stock: "gtk-edit" }
         }
         GtkButton {
@@ -168,12 +182,10 @@ class ParserTest(unittest.TestCase):
             image: GtkImage { stock: b1.image.stock }
         }
         """)
-        b1 = p.get_by_name("b1")
-        self.assertEquals(b1.get_label(), "Test")
-        self.assertEquals(b1.get_image().get_stock()[0], "gtk-edit")
         b2 = p.get_by_name("b2")
         self.assertEquals(b2.get_label(), "gtk-edit")
         self.assertEquals(b2.get_image().get_stock()[0], "gtk-edit")
+
 
     def testSignal(self):
         self.called = False
