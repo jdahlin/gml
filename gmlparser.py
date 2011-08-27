@@ -25,6 +25,7 @@ class Object(object):
         self.properties = []
         self.signals = []
         self.is_property = False
+        self.child_type = None
 
     def __repr__(self):
         return '<Object %r>' % (self.name, )
@@ -252,6 +253,8 @@ class GMLBuilder(gtk.Builder):
             if name.startswith('_'):
                 name = name[1:]
                 child_properties[name] = prop.value
+            elif name == 'child_type':
+                obj.child_type = prop.value
             else:
                 if isinstance(prop.value, Object):
                     prop.value = self._construct_object(prop.value)[0]
@@ -272,7 +275,7 @@ class GMLBuilder(gtk.Builder):
             self._objects[obj_id] = inst
 
             if parent is not None and not obj.is_property:
-                gtk.Buildable.add_child(parent, self, inst, None)
+                gtk.Buildable.add_child(parent, self, inst, obj.child_type)
         else:
             for name, value in properties.items():
                 inst.set_property(name, value)
