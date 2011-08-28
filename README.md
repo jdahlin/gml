@@ -126,6 +126,7 @@ Things to do, ordered by category
 * Gtk+3/Introspection port
 * Glade output
 * Clutter
+* C rewrite
 
 ## Parser
 * Lists
@@ -146,4 +147,4 @@ Things to do, ordered by category
 * Input: Existing widget tree via a GtkModule
 
 ## Tests
-* 100% coverage
+* 100% coverage (might be redundant for Python impl)
