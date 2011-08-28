@@ -4,7 +4,8 @@ import gobject
 import gtk
 import clutter
 
-from .parser import Object, GMLParser
+from .parser import (Object, GMLParser, TYPE_STRING, TYPE_IDENTIFIER,
+                     TYPE_BOOLEAN, TYPE_NUMBER, TYPE_OBJECT)
 
 
 class DelayedProperty(Exception):
@@ -122,6 +123,10 @@ class GMLBuilder(gtk.Builder):
             inst.set_property(prop_name, value)
 
     def _parse_property_bool(self, pspec, prop):
+        if prop.kind != TYPE_BOOLEAN:
+            raise Exception("Invalid boolean property value: %r" % (
+                prop.value, ))
+
         value = prop.value
         if value == 'true':
             return True
@@ -132,13 +137,21 @@ class GMLBuilder(gtk.Builder):
                 value, pspec.name, gobject.type_name(pspec.value_type)))
 
     def _parse_property_int(self, pspec, prop):
+        if prop.kind != TYPE_NUMBER:
+            raise Exception("Invalid integer property value: %r" % (
+                prop.value, ))
+
         value = prop.value
         try:
             return int(value)
         except ValueError:
-            raise Exception("Invalid int value: %s" % (value, ))
+            raise Exception("Invalid integer propety value: %r" % (value, ))
 
     def _parse_property_enum(self, pspec, prop):
+        if prop.kind != TYPE_IDENTIFIER:
+            raise Exception("Invalid enum property value: %r" % (
+                prop.value, ))
+
         value = prop.value
         if '.' in value:
             enum, value = value.split(".", 1)
@@ -153,8 +166,11 @@ class GMLBuilder(gtk.Builder):
 
     def _parse_property_string(self, pspec, prop):
         value = prop.value
-        if value[0] and value[-1] == '"':
+        if prop.kind == TYPE_STRING:
             return value[1:-1]
+        elif prop.kind != TYPE_IDENTIFIER:
+            raise Exception("Invalid string property value: %r" % (
+                prop.value, ))
 
         if "." in value:
             parts = value.split(".")
@@ -168,6 +184,10 @@ class GMLBuilder(gtk.Builder):
             return obj
 
     def _parse_property_object(self, pspec, prop):
+        if prop.kind not in [TYPE_IDENTIFIER, TYPE_OBJECT]:
+            raise Exception("Invalid object property value: %r" % (
+                prop.value, ))
+
         value = prop.value
         if isinstance(value, gobject.GObject):
             return value
