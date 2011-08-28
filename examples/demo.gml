@@ -1,4 +1,6 @@
 # // -*- mode: javascript -*-
+import Gtk
+
 GtkListStore {
     id: liststore1
 }
@@ -8,7 +10,7 @@ GtkWindow {
     default_height: 250
     default_width: 440
     title: "GtkBuilder demo"
-    destroy:: main_quit
+    destroy:: gtk_main_quit
     visible: true
     GtkVBox {
         GtkMenuBar {
@@ -30,7 +32,7 @@ GtkWindow {
                     GtkSeparatorMenuItem
                     GtkImageMenuItem { label: "gtk-quit"; use_stock: true
                                        tooltip_text: "Quit the program"
-                                       activate:: main_quit }
+                                       activate:: gtk_main_quit }
                 }
             }
 

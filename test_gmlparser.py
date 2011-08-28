@@ -223,6 +223,11 @@ class GMLBuilderTest(unittest.TestCase):
 
         self.failUnless(self.called)
 
+    def testImport(self):
+        p = GMLBuilder()
+        p.add_from_string("import Gtk; GtkWindow; import Clutter")
+        self.assertEquals(len(p.objects), 1)
+
 
 class BoxTest(unittest.TestCase):
     def testChildren(self):

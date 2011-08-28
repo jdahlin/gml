@@ -2,6 +2,7 @@ import StringIO
 
 import gobject
 import gtk
+import clutter
 
 from .parser import Object, GMLParser
 
@@ -136,6 +137,8 @@ class GMLBuilder(gtk.Builder):
             else:
                 raise Exception("Unknown value %r for property %r with type %s" % (
                     v, pspec.name, gobject.type_name(pspec.value_type)))
+        elif gobject.type_is_a(pspec.value_type, 'ClutterColor'):
+            return clutter.color_from_string("white")
 
         if v[0] and v[-1] == '"':
             return v[1:-1]
@@ -154,9 +157,23 @@ class GMLBuilder(gtk.Builder):
                 return self._objects[v]
             return int(v)
 
+    def _import(self, import_):
+        # FIXME: Proper import system
+        name = import_.name
+        if name == 'Gtk':
+            import gtk
+        elif name == 'Clutter':
+            import clutter
+        else:
+            raise Exception("Unknown module: %r" % (name, ))
+
     def _parse_and_construct(self, fp):
         parser = GMLParser()
-        for obj in parser.parse(fp):
+        ns = parser.parse(fp)
+        for import_ in ns.imports:
+            self._import(import_)
+
+        for obj in ns.objects:
             self._construct_object(obj)
 
         self._apply_delayed_properties()

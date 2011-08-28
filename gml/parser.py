@@ -13,6 +13,17 @@ class Token(object):
         return '<Token %s, %r>' % (token.tok_name[self.kind], self.value, )
 
 
+class Namespace(object):
+    def __init__(self):
+        self.imports = []
+        self.objects = []
+
+
+class Import(object):
+    def __init__(self, name):
+        self.name = name
+
+
 class Object(object):
     def __init__(self, name):
         self.name = name
@@ -92,19 +103,21 @@ class GMLParser(object):
 
     def parse(self, fp):
         self.tokenize(fp)
-        # Pass 2: build AST
-        objects = []
+
+        ns = Namespace()
         while not self._eof:
             retval = self._parse_statement()
             if retval is None:
                 continue
 
             if isinstance(retval, Object):
-                objects.append(retval)
+                ns.objects.append(retval)
+            elif isinstance(retval, Import):
+                ns.imports.append(retval)
             else:
                 raise Exception("Unexpected object: %s" % (retval, ))
 
-        return objects
+        return ns
 
     # Parser below
 
@@ -135,18 +148,24 @@ class GMLParser(object):
         if token is None: # EOF
             self._eof = True
             return
-        if token.kind == tokenize.NAME:
-            next = self._peek_token()
-            if next is None:
-                self._eof = True
-            elif next.value == '{':
-                return self._parse_object(token)
-
-            return self._create_object(token)
-        elif token.value == ";":
+        if token.value == ";":
             pass
+        elif token.kind == tokenize.NAME:
+            if token.value == 'import':
+                return self._parse_import()
+            else:
+                next = self._peek_token()
+                if next is None:
+                    self._eof = True
+                elif next.value == '{':
+                    return self._parse_object(token)
+                return self._create_object(token)
         else:
             raise Exception(token)
+
+    def _parse_import(self):
+        token = self._pop_token()
+        return Import(token.value)
 
     def _create_object(self, token, parent=None):
         #print '_create_object', token
