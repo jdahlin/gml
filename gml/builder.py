@@ -174,14 +174,17 @@ class GMLBuilder(gtk.Builder):
 
         if "." in value:
             parts = value.split(".")
-            start = parts[0]
-            obj = self.get_by_name(start)
-            if obj is None:
-                raise Exception("Unknown object %r" % (start, ))
-
-            for part in parts[1:]:
-                obj = getattr(obj.props, part)
-            return obj
+            obj_name = parts[0]
+        else:
+            parts = []
+            obj_name = value
+        obj = self.get_by_name(obj_name)
+        if obj is None:
+            raise Exception("Invalid string property value: %r" % (
+                prop.value, ))
+        for part in parts[1:]:
+            obj = getattr(obj.props, part)
+        return obj
 
     def _parse_property_object(self, pspec, prop):
         if prop.kind not in [TYPE_IDENTIFIER, TYPE_OBJECT]:
