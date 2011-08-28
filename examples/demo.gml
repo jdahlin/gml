@@ -9,7 +9,7 @@ GtkWindow {
     id: window1
     default_height: 250
     default_width: 440
-    title: "GtkBuilder demo"
+    title: "GML demo"
     destroy:: gtk_main_quit
     visible: true
     GtkVBox {
