@@ -68,10 +68,15 @@ class GMLParser(object):
         self._eof = False
         self._tokens = []
 
-    def parse(self, fp):
+    def tokenize(self, fp):
         # Pass 1: remove comments
         tokenize.tokenize(fp.readline, self.feed)
 
+    @property
+    def tokens(self):
+        return list(reversed(self._tokens))
+
+    def parse(self, fp):
         # Pass 2: build AST
         objects = []
         while not self._eof:
@@ -366,6 +371,7 @@ class GMLBuilder(gtk.Builder):
 
     def _parse_and_construct(self, fp):
         parser = GMLParser()
+        parser.tokenize()
         for obj in parser.parse(fp):
             self._construct_object(obj)
 

@@ -2,6 +2,7 @@
 # -*- mode: python -*-
 
 import optparse
+import pprint
 import sys
 
 import gtk
@@ -10,16 +11,25 @@ from gmlparser import GMLParser, GMLBuilder
 
 def main(args):
     parser = optparse.OptionParser()
+    parser.add_option("-t", "--token", action="store_true",
+                      dest="token", help="Tokenize only")
     options, args = parser.parse_args(args)
 
-    gb = GMLBuilder()
-    gb.signals["main_quit"] = gtk.main_quit
-    gb.add_from_file(args[1])
+    filename = args[1]
 
-    for w in gb.objects:
-        if isinstance(w, gtk.Window):
-            w.show_all()
-    gtk.main()
+    if options.token:
+        parser = GMLParser()
+        parser.tokenize(open(filename))
+        pprint.pprint(parser.tokens)
+    else:
+        builder = GMLBuilder()
+        builder.signals["main_quit"] = gtk.main_quit
+        builder.add_from_file(filename)
+
+        for w in gb.objects:
+            if isinstance(w, gtk.Window):
+                w.show_all()
+        gtk.main()
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
