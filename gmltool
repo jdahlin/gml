@@ -11,16 +11,21 @@ from gmlparser import GMLParser, GMLBuilder
 
 def main(args):
     parser = optparse.OptionParser()
+    parser.add_option("-p", "--parse", action="store_true",
+                      dest="parse", help="Parse only")
     parser.add_option("-t", "--token", action="store_true",
                       dest="token", help="Tokenize only")
     options, args = parser.parse_args(args)
 
     filename = args[1]
-
     if options.token:
         parser = GMLParser()
         parser.tokenize(open(filename))
         pprint.pprint(parser.tokens)
+    elif options.parse:
+        parser = GMLParser()
+        objects = parser.parse(open(filename))
+        pprint.pprint([o.json() for o in objects], width=60)
     else:
         builder = GMLBuilder()
         builder.signals["main_quit"] = gtk.main_quit

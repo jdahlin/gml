@@ -16,7 +16,6 @@ class Token(object):
     def __repr__(self):
         return '<Token %r>' % (self.value, )
 
-
 class Object(object):
     def __init__(self, name):
         self.name = name
@@ -25,6 +24,17 @@ class Object(object):
         self.signals = []
         self.is_property = False
         self.child_type = None
+
+    def json(self):
+        od = dict()
+        od['name'] = self.name
+        if self.children:
+            od['c'] = [c.json() for c in self.children]
+        if self.properties:
+            od['props'] = [p.json() for p in self.properties]
+        if self.signals:
+            od['signals'] = [s.json() for s in self.signals]
+        return od
 
     def __repr__(self):
         return '<Object %r>' % (self.name, )
@@ -35,6 +45,9 @@ class Property(object):
         self.name = name
         self.value = value
 
+    def json(self):
+        return (self.name, self.value)
+
     def __repr__(self):
         return '<Property %s=%r>' % (self.name, self.value)
 
@@ -43,6 +56,10 @@ class Signal(object):
     def __init__(self, name, handler):
         self.name = name
         self.handler = handler
+
+    def json(self):
+        return { 'name' : self.name,
+                 'handler' : self.handler }
 
     def __repr__(self):
         return '<Signal %s=%s>' % (self.name, self.handler)
@@ -77,6 +94,7 @@ class GMLParser(object):
         return list(reversed(self._tokens))
 
     def parse(self, fp):
+        self.tokenize(fp)
         # Pass 2: build AST
         objects = []
         while not self._eof:
@@ -371,7 +389,6 @@ class GMLBuilder(gtk.Builder):
 
     def _parse_and_construct(self, fp):
         parser = GMLParser()
-        parser.tokenize()
         for obj in parser.parse(fp):
             self._construct_object(obj)
 
