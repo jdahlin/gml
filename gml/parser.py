@@ -1,6 +1,12 @@
 import token
 import tokenize
 
+(TYPE_IDENTIFIER,
+ TYPE_STRING,
+ TYPE_NUMBER,
+ TYPE_BOOLEAN,
+ TYPE_OBJECT) = range(5)
+
 
 class Token(object):
     def __init__(self, kind, value, start, end):
@@ -49,9 +55,10 @@ class Object(object):
 
 
 class Property(object):
-    def __init__(self, name, value):
+    def __init__(self, name, value, kind):
         self.name = name
         self.value = value
+        self.kind = kind
 
     def json(self):
         return (self.name, self.value)
@@ -211,17 +218,29 @@ class GMLParser(object):
         obj = self._create_object(token, parent)
         return obj
 
-    def _parse_property(self, obj, token):
+    def _parse_property(self, obj, name_token):
         #print '_parse_property', token
-        prop_name = token.value
+        prop_name = name_token.value
         self._expect(':')
-        prop_token = self._peek_token()
+        value_token = self._peek_token()
         value = self._parse_property_value()
         if self._peek_token().value == '{':
-            value = self._parse_object(prop_token)
+            value = self._parse_object(value_token)
             value.is_property = True
-
-        obj.properties.append(Property(prop_name, value))
+            prop_kind = TYPE_OBJECT
+        else:
+            if value_token.kind == token.NUMBER:
+                prop_kind = TYPE_NUMBER
+            elif value_token.kind == token.NAME:
+                if value_token.value in ['true', 'false']:
+                    prop_kind = TYPE_BOOLEAN
+                else:
+                    prop_kind = TYPE_IDENTIFIER
+            elif value_token.kind == token.STRING:
+                prop_kind = TYPE_STRING
+            else:
+                raise NotImplementedError(token.tok_name[value_token.kind])
+        obj.properties.append(Property(prop_name, value, prop_kind))
 
     def _parse_property_reference(self, token):
         self._pop_token()
