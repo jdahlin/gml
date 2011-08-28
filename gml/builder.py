@@ -15,6 +15,7 @@ class GMLBuilder(gtk.Builder):
     def __init__(self):
         gtk.Builder.__init__(self)
         self._objects = {}
+        self._property_parsers = {}
         self.signals = {}
         self._delayed_properties = []
 
@@ -110,6 +111,10 @@ class GMLBuilder(gtk.Builder):
             inst.set_property(prop_name, value)
 
     def _eval_prop_value(self, pspec, v):
+        parser = self._property_parsers.get(pspec.value_type, None)
+        if parser is not None:
+            return parser(pspec, v)
+
         if gobject.type_is_a(pspec.value_type, gobject.TYPE_OBJECT):
             if isinstance(v, gobject.GObject):
                 return v
@@ -137,8 +142,6 @@ class GMLBuilder(gtk.Builder):
             else:
                 raise Exception("Unknown value %r for property %r with type %s" % (
                     v, pspec.name, gobject.type_name(pspec.value_type)))
-        elif gobject.type_is_a(pspec.value_type, 'ClutterColor'):
-            return clutter.color_from_string("white")
 
         if v[0] and v[-1] == '"':
             return v[1:-1]
@@ -166,6 +169,11 @@ class GMLBuilder(gtk.Builder):
         elif name == 'Clutter':
             import clutter
             self.signals["clutter_main_quit"] = clutter.main_quit
+
+            def convert_color(pspec, value):
+                s = value[1:-1]
+                return clutter.color_from_string(s)
+            self._property_parsers[clutter.Color.__gtype__] = convert_color
         else:
             raise Exception("Unknown module: %r" % (name, ))
 
