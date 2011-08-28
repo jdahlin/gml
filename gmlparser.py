@@ -1,5 +1,4 @@
 import StringIO
-import sys
 import tokenize
 
 import gobject
@@ -386,17 +385,3 @@ class GMLBuilder(gtk.Builder):
     @property
     def objects(self):
         return self._objects.values()
-
-
-def main(args):
-    gb = GMLBuilder()
-    gb.signals["main_quit"] = gtk.main_quit
-    gb.add_from_file(args[1])
-
-    for w in gb.objects:
-        if isinstance(w, gtk.Window):
-            w.show_all()
-    gtk.main()
-
-if __name__ == '__main__':
-    sys.exit(main(sys.argv))
