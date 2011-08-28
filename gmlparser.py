@@ -1,4 +1,5 @@
 import StringIO
+import token
 import tokenize
 
 import gobject
@@ -14,7 +15,7 @@ class Token(object):
         self.end = end
 
     def __repr__(self):
-        return '<Token %r>' % (self.value, )
+        return '<Token %s, %r>' % (token.tok_name[self.kind], self.value, )
 
 class Object(object):
     def __init__(self, name):
