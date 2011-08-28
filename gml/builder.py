@@ -19,6 +19,17 @@ class GMLBuilder(gtk.Builder):
         self.signals = {}
         self._delayed_properties = []
 
+        self._register_property_parsers()
+
+    def _register_property_parsers(self):
+        self._property_parsers[gobject.TYPE_BOOLEAN] = self._parse_property_bool
+        self._property_parsers[gobject.TYPE_INT] = self._parse_property_int
+        self._property_parsers[gobject.TYPE_UINT] = self._parse_property_int
+        self._property_parsers[gobject.TYPE_STRING] = self._parse_property_string
+        self._property_parsers[gobject.TYPE_ENUM] = self._parse_property_enum
+        self._property_parsers[gobject.TYPE_OBJECT] = self._parse_property_object
+        self._property_parsers[gobject.TYPE_INTERFACE] = self._parse_property_object
+
     def _construct_object(self, obj, parent=None):
         if parent is not None:
             inst = getattr(parent.props, obj.name, None)
@@ -55,7 +66,7 @@ class GMLBuilder(gtk.Builder):
                 else:
                     pspec = getattr(obj_type.pytype.props, name)
                     try:
-                        properties[name] = self._eval_prop_value(pspec, prop.value)
+                        properties[name] = self._parse_property(pspec, prop.value)
                     except DelayedProperty:
                         delayed_properties.append(prop)
 
@@ -84,7 +95,7 @@ class GMLBuilder(gtk.Builder):
                     child_pspecs[pspec.name] = pspec
                 for prop_name, value in child_props.items():
                     pspec = child_pspecs[prop_name]
-                    value = self._eval_prop_value(pspec, value)
+                    value = self._parse_property(pspec, value)
                     inst.child_set_property(child_inst, prop_name, value)
 
         # Delayed_properties
@@ -106,47 +117,43 @@ class GMLBuilder(gtk.Builder):
             if gobject.type_is_a(pspec.value_type, gobject.TYPE_OBJECT):
                 value = self._objects[prop.value]
             else:
-                value = self._eval_prop_value(pspec, prop.value)
+                value = self._parse_property(pspec, prop.value)
 
             inst.set_property(prop_name, value)
 
-    def _eval_prop_value(self, pspec, v):
-        parser = self._property_parsers.get(pspec.value_type, None)
-        if parser is not None:
-            return parser(pspec, v)
+    def _parse_property_bool(self, pspec, value):
+        if value == 'true':
+            return True
+        elif value == 'false':
+            return False
+        else:
+            raise Exception("Unknown value %r for property %r with type %s" % (
+                value, pspec.name, gobject.type_name(pspec.value_type)))
 
-        if gobject.type_is_a(pspec.value_type, gobject.TYPE_OBJECT):
-            if isinstance(v, gobject.GObject):
-                return v
-            elif isinstance(v, str):
-                raise DelayedProperty
-            else:
-                raise Exception(v)
-        elif gobject.type_is_a(pspec.value_type, gobject.TYPE_ENUM):
-            if '.' in v:
-                enum, value = v.split(".", 1)
-                enum_type = gobject.type_from_name(enum)
-            else:
-                enum_type = pspec.value_type
-                value = v
-            for e in enum_type.pytype.__enum_values__.values():
-                if e.value_nick == value:
-                    return e
+    def _parse_property_int(self, pspec, value):
+        try:
+            return int(value)
+        except ValueError:
+            raise Exception("Invalid int value: %s" % (value, ))
 
-            raise Exception(v)
-        elif gobject.type_is_a(pspec.value_type, gobject.TYPE_BOOLEAN):
-            if v == 'true':
-                return True
-            elif v == 'false':
-                return False
-            else:
-                raise Exception("Unknown value %r for property %r with type %s" % (
-                    v, pspec.name, gobject.type_name(pspec.value_type)))
+    def _parse_property_enum(self, pspec, value):
+        if '.' in value:
+            enum, value = value.split(".", 1)
+            enum_type = gobject.type_from_name(enum)
+        else:
+            enum_type = pspec.value_type
+        for e in enum_type.pytype.__enum_values__.values():
+            if e.value_nick == value:
+                return e
 
-        if v[0] and v[-1] == '"':
-            return v[1:-1]
-        elif "." in v:
-            parts = v.split(".")
+        raise Exception(value)
+
+    def _parse_property_string(self, pspec, value):
+        if value[0] and value[-1] == '"':
+            return value[1:-1]
+
+        if "." in value:
+            parts = value.split(".")
             start = parts[0]
             obj = self.get_by_name(start)
             if obj is None:
@@ -155,10 +162,28 @@ class GMLBuilder(gtk.Builder):
             for part in parts[1:]:
                 obj = getattr(obj.props, part)
             return obj
+
+    def _parse_property_object(self, pspec, value):
+        if isinstance(value, gobject.GObject):
+            return value
+        elif isinstance(value, str):
+            raise DelayedProperty
         else:
-            if v in self._objects:
-                return self._objects[v]
-            return int(v)
+            raise Exception(value)
+
+    def _parse_property(self, pspec, value):
+        value_type = pspec.value_type
+        while True:
+            parser = self._property_parsers.get(value_type, None)
+            if parser is not None:
+                return parser(pspec, value)
+
+            try:
+                value_type = gobject.type_parent(value_type)
+            except RuntimeError:
+                break
+
+        raise NotImplementedError(pspec.value_type)
 
     def _import(self, import_):
         # FIXME: Proper import system
