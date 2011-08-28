@@ -54,7 +54,7 @@ class GMLBuilder(gtk.Builder):
 
             if name.startswith('_'):
                 name = name[1:]
-                child_properties[name] = prop.value
+                child_properties[name] = prop
             elif name == 'child_type':
                 obj.child_type = prop.value
             else:
@@ -66,7 +66,7 @@ class GMLBuilder(gtk.Builder):
                 else:
                     pspec = getattr(obj_type.pytype.props, name)
                     try:
-                        properties[name] = self._parse_property(pspec, prop.value)
+                        properties[name] = self._parse_property(pspec, prop)
                     except DelayedProperty:
                         delayed_properties.append(prop)
 
@@ -93,9 +93,9 @@ class GMLBuilder(gtk.Builder):
                 child_pspecs = {}
                 for pspec in inst.list_child_properties():
                     child_pspecs[pspec.name] = pspec
-                for prop_name, value in child_props.items():
+                for prop_name, prop in child_props.items():
                     pspec = child_pspecs[prop_name]
-                    value = self._parse_property(pspec, value)
+                    value = self._parse_property(pspec, prop)
                     inst.child_set_property(child_inst, prop_name, value)
 
         # Delayed_properties
@@ -117,11 +117,12 @@ class GMLBuilder(gtk.Builder):
             if gobject.type_is_a(pspec.value_type, gobject.TYPE_OBJECT):
                 value = self._objects[prop.value]
             else:
-                value = self._parse_property(pspec, prop.value)
+                value = self._parse_property(pspec, prop)
 
             inst.set_property(prop_name, value)
 
-    def _parse_property_bool(self, pspec, value):
+    def _parse_property_bool(self, pspec, prop):
+        value = prop.value
         if value == 'true':
             return True
         elif value == 'false':
@@ -130,13 +131,15 @@ class GMLBuilder(gtk.Builder):
             raise Exception("Unknown value %r for property %r with type %s" % (
                 value, pspec.name, gobject.type_name(pspec.value_type)))
 
-    def _parse_property_int(self, pspec, value):
+    def _parse_property_int(self, pspec, prop):
+        value = prop.value
         try:
             return int(value)
         except ValueError:
             raise Exception("Invalid int value: %s" % (value, ))
 
-    def _parse_property_enum(self, pspec, value):
+    def _parse_property_enum(self, pspec, prop):
+        value = prop.value
         if '.' in value:
             enum, value = value.split(".", 1)
             enum_type = gobject.type_from_name(enum)
@@ -148,7 +151,8 @@ class GMLBuilder(gtk.Builder):
 
         raise Exception(value)
 
-    def _parse_property_string(self, pspec, value):
+    def _parse_property_string(self, pspec, prop):
+        value = prop.value
         if value[0] and value[-1] == '"':
             return value[1:-1]
 
@@ -163,7 +167,8 @@ class GMLBuilder(gtk.Builder):
                 obj = getattr(obj.props, part)
             return obj
 
-    def _parse_property_object(self, pspec, value):
+    def _parse_property_object(self, pspec, prop):
+        value = prop.value
         if isinstance(value, gobject.GObject):
             return value
         elif isinstance(value, str):
@@ -171,12 +176,12 @@ class GMLBuilder(gtk.Builder):
         else:
             raise Exception(value)
 
-    def _parse_property(self, pspec, value):
+    def _parse_property(self, pspec, prop):
         value_type = pspec.value_type
         while True:
             parser = self._property_parsers.get(value_type, None)
             if parser is not None:
-                return parser(pspec, value)
+                return parser(pspec, prop)
 
             try:
                 value_type = gobject.type_parent(value_type)
@@ -195,7 +200,7 @@ class GMLBuilder(gtk.Builder):
             import clutter
             self.signals["clutter_main_quit"] = clutter.main_quit
 
-            def convert_color(pspec, value):
+            def convert_color(pspec, prop):
                 s = value[1:-1]
                 return clutter.color_from_string(s)
             self._property_parsers[clutter.Color.__gtype__] = convert_color
