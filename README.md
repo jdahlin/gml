@@ -115,3 +115,35 @@ GtkWindow {
 * Boolean: true or false
 * Identifiers: button1
 * References: same as identifiers
+
+# TODO
+
+Things to do, ordered by category
+
+## General
+* Build system
+* Add license headers
+* Gtk+3/Introspection port
+* Glade output
+* Clutter
+
+## Parser
+* Lists
+* New tokenizer
+* Check token types better in parser
+* Add error messages to parser
+* Add a type for property referencs
+
+## Builder
+* GtkListStore columns & rows
+
+## Tool
+* Split into commands: run, validate, tokenize, parse, convert
+* Add a validator
+* Output: C
+* Output: GtkBuilder
+* Input: GtkBuilder
+* Input: Existing widget tree via a GtkModule
+
+## Tests
+* 100% coverage
