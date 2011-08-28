@@ -3,6 +3,8 @@
 This is an experimental parser and runtime for a QML like markup language
 for Gtk+/Clutter. It is inspired by Qt's <http://en.wikipedia.org/wiki/QML>.
 
+GML is licensed under GNU GPLv2+.
+
 # Syntax
 
 ## Creating objects
