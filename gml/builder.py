@@ -45,7 +45,6 @@ class GMLBuilder(gtk.Builder):
 
         # Properties
         properties = {}
-        child_properties = {}
         delayed_properties = []
         for prop in obj.properties:
             name = prop.name
@@ -53,23 +52,20 @@ class GMLBuilder(gtk.Builder):
                 obj_id = prop.value
                 continue
 
-            if name.startswith('_'):
-                name = name[1:]
-                child_properties[name] = prop
-            elif name == 'child_type':
+            if name == 'child_type':
                 obj.child_type = prop.value
-            else:
-                if isinstance(prop.value, Object):
-                    prop.value = self._construct_object(prop.value)[0]
+                continue
+            if isinstance(prop.value, Object):
+                prop.value = self._construct_object(prop.value)
 
-                if '.' in name:
+            if '.' in name:
+                delayed_properties.append(prop)
+            else:
+                pspec = getattr(obj_type.pytype.props, name)
+                try:
+                    properties[name] = self._parse_property(pspec, prop)
+                except DelayedProperty:
                     delayed_properties.append(prop)
-                else:
-                    pspec = getattr(obj_type.pytype.props, name)
-                    try:
-                        properties[name] = self._parse_property(pspec, prop)
-                    except DelayedProperty:
-                        delayed_properties.append(prop)
 
         if inst is None:
             inst = gobject.new(obj_type, **properties)
@@ -90,19 +86,31 @@ class GMLBuilder(gtk.Builder):
         # Children
         if isinstance(inst, gtk.Container):
             for child in obj.children:
-                child_inst, child_props = self._construct_object(child, inst)
-                child_pspecs = {}
-                for pspec in inst.list_child_properties():
-                    child_pspecs[pspec.name] = pspec
-                for prop_name, prop in child_props.items():
-                    pspec = child_pspecs[prop_name]
+                properties = self._extract_child_properties(child)
+                child_inst = self._construct_object(child, inst)
+                child_pspecs = self._get_child_pspecs(inst)
+                for prop in properties:
+                    pspec = child_pspecs[prop.name]
                     value = self._parse_property(pspec, prop)
-                    inst.child_set_property(child_inst, prop_name, value)
+                    inst.child_set_property(child_inst, prop.name, value)
 
         # Delayed_properties
         for prop in delayed_properties:
             self._delayed_properties.append((inst, prop))
-        return inst, child_properties
+        return inst
+
+    def _extract_child_properties(self, obj):
+        for child in obj.children[:]:
+            if child.name == 'packing':
+                obj.children.remove(child)
+                return child.properties
+        return []
+
+    def _get_child_pspecs(self, inst):
+        pspecs = {}
+        for pspec in inst.list_child_properties():
+            pspecs[pspec.name] = pspec
+        return pspecs
 
     def _apply_delayed_properties(self):
         for inst, prop in self._delayed_properties:

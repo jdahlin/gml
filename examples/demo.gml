@@ -14,8 +14,7 @@ GtkWindow {
     visible: true
     GtkVBox {
         GtkMenuBar {
-            _expand: false
-
+            packing { expand: false }
             GtkMenuItem {
                 label: "_File"
                 use_underline: true
@@ -61,7 +60,7 @@ GtkWindow {
         }
 
         GtkToolbar {
-            _expand: false
+            packing { expand: false }
             GtkToolButton { stock_id: "gtk-new" }
             GtkToolButton { stock_id: "gtk-open" }
             GtkToolButton { stock_id: "gtk-save" }
@@ -96,7 +95,7 @@ GtkWindow {
 
         GtkStatusbar {
             id: statusbar1
-            _expand: false
+            packing { expand: false }
         }
     }
 }

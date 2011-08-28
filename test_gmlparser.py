@@ -83,13 +83,13 @@ class GMLBuilderTest(unittest.TestCase):
         sw = p.get_by_name("sw1")
         self.assertEquals(sw.props.hscrollbar_policy, gtk.POLICY_AUTOMATIC)
 
-    def testPropertyChild(self):
+    def testPropertyPacking(self):
         p = GMLBuilder()
         p.add_from_string("""GtkVBox {
             id: box
             GtkButton {
             id: button
-               _expand: true
+               packing { expand: true }
             }
         }""")
         box = p.get_by_name("box")
@@ -193,17 +193,15 @@ class GMLBuilderTest(unittest.TestCase):
           id: box
           GtkMenuBar {
             id: menubar
-            _expand: false
             GtkMenuItem
-            _fill: false
+            name: "Menu"
           }
         }""")
 
         box = p.get_by_name("box")
         menubar = p.get_by_name("menubar")
 
-        self.assertEquals(box.child_get_property(menubar, 'expand'), False)
-        self.assertEquals(box.child_get_property(menubar, 'fill'), False)
+        self.assertEquals(menubar.props.name, 'Menu')
 
     def testSignal(self):
         self.called = False

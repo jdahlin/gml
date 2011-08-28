@@ -95,14 +95,15 @@ GtkWindow {
 }
 ```
 
-GtkContainers supports the concept of child properties, they are currently implemented
-as underscore properties, eg:
+GtkContainers supports the concept of child properties, they are in a separate
+object tag called packing, eg:
 
 ```javascript
 GtkWindow {
   GtkVBox {
     GtkButton {
-      _expand: true
+      packing { expand: true }
+    }
   }
 }
 ```
