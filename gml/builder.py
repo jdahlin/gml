@@ -162,8 +162,10 @@ class GMLBuilder(gtk.Builder):
         name = import_.name
         if name == 'Gtk':
             import gtk
+            self.signals["gtk_main_quit"] = gtk.main_quit
         elif name == 'Clutter':
             import clutter
+            self.signals["clutter_main_quit"] = clutter.main_quit
         else:
             raise Exception("Unknown module: %r" % (name, ))
 
@@ -192,3 +194,7 @@ class GMLBuilder(gtk.Builder):
     @property
     def objects(self):
         return self._objects.values()
+
+    def main(self):
+        # FIXME: modules should define this
+        gtk.main()

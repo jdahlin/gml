@@ -5,9 +5,6 @@ import optparse
 import pprint
 import sys
 
-import gtk
-import clutter
-
 from gml.parser import GMLParser
 from gml.builder import GMLBuilder
 
@@ -30,17 +27,13 @@ def main(args):
         pprint.pprint([o.json() for o in objects], width=60)
     else:
         builder = GMLBuilder()
-        builder.signals["gtk_main_quit"] = gtk.main_quit
-        builder.signals["clutter_main_quit"] = clutter.main_quit
         builder.add_from_file(filename)
 
         for top in builder.objects:
-            if isinstance(top, gtk.Window):
-                top.show_all()
-            elif isinstance(top, clutter.Stage):
+            if hasattr(top, 'show_all'):
                 top.show_all()
 
-        gtk.main()
+        builder.main()
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
