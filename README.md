@@ -6,6 +6,9 @@ for Gtk+/Clutter. It is inspired by Qt's [QML](http://en.wikipedia.org/wiki/QML)
 It's intended to complement the [GtkBuilder format](http://developer.gnome.org/gtk3/stable/GtkBuilder.html#GtkBuilder.description)
 included in Gtk+.
 
+The current implementation is written using Python, it will be ported to C when it's a bit
+more mature and better tested.
+
 GML is licensed under GNU GPLv2+.
 
 # Example
@@ -17,7 +20,6 @@ GtkWindow {
     GtkLabel {
       label: "Hello world"
       packing { expand: False }
-    
     }
     GtkButton {
       label: "Click me"
