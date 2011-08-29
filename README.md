@@ -24,19 +24,19 @@ GtkWindow {
 }
 ```
 
-For more examples, see the [examples folder](https://github.com/jdahlin/gml/blob/master/examples/)
+For more examples, see the [examples folder](https://github.com/jdahlin/gml/blob/master/examples/).
 
 # Syntax
 
 ## Creating objects
 
-Creating a new toplevel object you just use the type name
+Creating a new toplevel object you just use the type name:
 
 ```javascript
 GtkWindow
 ```
 
-You can also specify a new type without any properties
+You can also specify a new type without any properties:
 
 ```javascript
 GtkWindow {}
