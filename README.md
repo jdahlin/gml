@@ -37,7 +37,7 @@ GtkWindow {
 }
 ```
 
-There's a special property called **id** which can is used to identify the object:
+There's a special property called ``id`` which can is used to identify the object:
 
 ```javascript
 GtkWindow {
