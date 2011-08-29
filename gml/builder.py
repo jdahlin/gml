@@ -12,9 +12,9 @@ class DelayedProperty(Exception):
     pass
 
 
-class GMLBuilder(gtk.Builder):
+class GMLBuilder(object):
     def __init__(self):
-        gtk.Builder.__init__(self)
+        self._fake_builder = gtk.Builder()
         self._objects = {}
         self._property_parsers = {}
         self.signals = {}
@@ -74,7 +74,8 @@ class GMLBuilder(gtk.Builder):
             self._objects[obj_id] = inst
 
             if parent is not None and not obj.is_property:
-                gtk.Buildable.add_child(parent, self, inst, obj.child_type)
+                gtk.Buildable.add_child(parent, self._fake_builder,
+                                        inst, obj.child_type)
         else:
             for name, value in properties.items():
                 inst.set_property(name, value)
