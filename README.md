@@ -110,12 +110,11 @@ GtkWindow {
 
 # Supported types
 
-* Strings: "string" or 'string'
-* Integers: 123
-* Floating point: 0.1
-* Boolean: true or false
-* Identifiers: button1
-* References: same as identifiers
+* Strings: ``"string"`` or ``'string'``
+* Integers: ``123``
+* Floating point: ``0.1``
+* Boolean: ``true`` or ``false``
+* Identifiers / References: ``button1``
 
 # TODO
 
