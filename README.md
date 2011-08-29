@@ -3,9 +3,12 @@
 This is an experimental parser and runtime for a QML like markup language
 for Gtk+/Clutter. It is inspired by Qt's [QML](http://en.wikipedia.org/wiki/QML).
 
+It's intended to complement the [GtkBuilder format](http://developer.gnome.org/gtk3/stable/GtkBuilder.html#GtkBuilder.description)
+included in Gtk+.
+
 GML is licensed under GNU GPLv2+.
 
-# Examples
+# Example
 
 ```javascript
 GtkWindow {
