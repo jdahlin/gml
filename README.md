@@ -1,9 +1,30 @@
 # GML
 
 This is an experimental parser and runtime for a QML like markup language
-for Gtk+/Clutter. It is inspired by Qt's <http://en.wikipedia.org/wiki/QML>.
+for Gtk+/Clutter. It is inspired by Qt's [QML](http://en.wikipedia.org/wiki/QML).
 
 GML is licensed under GNU GPLv2+.
+
+# Examples
+
+```javascript
+GtkWindow {
+  title: "GML example"
+  GtkVBox {
+    GtkLabel {
+      label: "Hello world"
+      packing { expand: False }
+    
+    }
+    GtkButton {
+      label: "Click me"
+      packing { expand: False }
+    }
+  }
+}
+```
+
+For more examples, see the [examples folder](https://github.com/jdahlin/gml/blob/master/examples/demo.gml)
 
 # Syntax
 
