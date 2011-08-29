@@ -24,7 +24,7 @@ GtkWindow {
 }
 ```
 
-For more examples, see the [examples folder](https://github.com/jdahlin/gml/blob/master/examples/demo.gml)
+For more examples, see the [examples folder](https://github.com/jdahlin/gml/blob/master/examples/)
 
 # Syntax
 
