@@ -9,7 +9,7 @@ included in Gtk+.
 The current implementation is written using Python, it will be ported to C when it's a bit
 more mature and better tested.
 
-GML is licensed under GNU GPLv2+.
+GML is licensed under GNU LGPL version 2 or later.
 
 # Example
 
