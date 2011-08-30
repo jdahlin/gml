@@ -5,8 +5,7 @@ import optparse
 import pprint
 import sys
 
-from gml.parser import GMLParser
-from gml.builder import GMLBuilder
+from gml import config
 
 def main(args):
     parser = optparse.OptionParser()
@@ -14,7 +13,15 @@ def main(args):
                       dest="parse", help="Parse only")
     parser.add_option("-t", "--token", action="store_true",
                       dest="token", help="Tokenize only")
+    parser.add_option("-o", "--old", action="store_true",
+                      dest="old", help="Use old PyGTK bindings")
     options, args = parser.parse_args(args)
+
+    if options.old:
+        config.use_pygtk = True
+
+    from gml.parser import GMLParser
+    from gml.builder import GMLBuilder
 
     filename = args[1]
     if options.token:

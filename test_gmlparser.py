@@ -1,8 +1,12 @@
 import unittest
 
-import gtk
-
+from gml.config import use_pygtk
 from gml.builder import GMLBuilder
+
+if use_pygtk:
+    import gtk as Gtk
+else:
+    from gi.repository import Gtk
 
 
 class GMLBuilderTest(unittest.TestCase):
@@ -38,27 +42,27 @@ class GMLBuilderTest(unittest.TestCase):
         p.add_from_string('GtkWindow { id: w1 } GtkWindow { id: w2 }')
         self.assertEquals(len(p.objects), 2)
         w1 = p.get_by_name("w1")
-        self.failUnless(isinstance(w1, gtk.Window))
+        self.failUnless(isinstance(w1, Gtk.Window))
         w2 = p.get_by_name("w2")
-        self.failUnless(isinstance(w2, gtk.Window))
+        self.failUnless(isinstance(w2, Gtk.Window))
 
     def testNested(self):
         p = GMLBuilder()
         p.add_from_string("GtkWindow { id: w1; GtkButton { } }")
         win = p.get_by_name('w1')
-        self.failUnless(isinstance(win, gtk.Window))
+        self.failUnless(isinstance(win, Gtk.Window))
         children = win.get_children()
         self.failUnless(children)
         self.assertEquals(len(children), 1)
         button = children[0]
-        self.failUnless(isinstance(button, gtk.Button))
+        self.failUnless(isinstance(button, Gtk.Button))
 
     def testPropertyString(self):
         p = GMLBuilder()
         p.add_from_string('GtkButton { label: "Label" }')
         self.assertEquals(len(p.objects), 1)
         button = p.objects[0]
-        self.failUnless(isinstance(button, gtk.Button))
+        self.failUnless(isinstance(button, Gtk.Button))
         self.assertEquals(button.get_label(), "Label")
 
     def testPropertyBool(self):
@@ -66,14 +70,14 @@ class GMLBuilderTest(unittest.TestCase):
         p.add_from_string('GtkButton { use_underline: true }')
         self.assertEquals(len(p.objects), 1)
         button = p.objects[0]
-        self.failUnless(isinstance(button, gtk.Button))
+        self.failUnless(isinstance(button, Gtk.Button))
         self.assertEquals(button.props.use_underline, True)
 
     def testPropertyEnum(self):
         p = GMLBuilder()
         p.add_from_string('GtkScrolledWindow { id: sw1; hscrollbar_policy: automatic }')
         sw = p.get_by_name("sw1")
-        self.assertEquals(sw.props.hscrollbar_policy, gtk.POLICY_AUTOMATIC)
+        self.assertEquals(sw.props.hscrollbar_policy, Gtk.POLICY_AUTOMATIC)
 
         p = GMLBuilder()
         p.add_from_string("""GtkScrolledWindow {
@@ -81,7 +85,7 @@ class GMLBuilderTest(unittest.TestCase):
             hscrollbar_policy: GtkPolicyType.automatic
         }""")
         sw = p.get_by_name("sw1")
-        self.assertEquals(sw.props.hscrollbar_policy, gtk.POLICY_AUTOMATIC)
+        self.assertEquals(sw.props.hscrollbar_policy, Gtk.POLICY_AUTOMATIC)
 
     def testPropertyPacking(self):
         p = GMLBuilder()
@@ -104,7 +108,7 @@ class GMLBuilderTest(unittest.TestCase):
         }""")
         self.assertEquals(len(p.objects), 1)
         button = p.objects[0]
-        self.failUnless(isinstance(button, gtk.Button))
+        self.failUnless(isinstance(button, Gtk.Button))
         self.assertEquals(button.get_label(), "Label")
         self.assertEquals(button.props.use_underline, True)
 
@@ -115,7 +119,7 @@ class GMLBuilderTest(unittest.TestCase):
         }""")
         self.assertEquals(len(p.objects), 1)
         button = p.objects[0]
-        self.failUnless(isinstance(button, gtk.Button))
+        self.failUnless(isinstance(button, Gtk.Button))
         self.assertEquals(button.get_label(), "Label")
         self.assertEquals(button.props.use_underline, True)
 
@@ -238,15 +242,15 @@ class BoxTest(unittest.TestCase):
           }
         }""")
         win = p.get_by_name("w1")
-        self.failUnless(isinstance(win, gtk.Window))
+        self.failUnless(isinstance(win, Gtk.Window))
         box = win.get_child()
         children = box.get_children()
         self.failUnless(children)
         self.assertEquals(len(children), 2)
         button = children[0]
-        self.failUnless(isinstance(button, gtk.Button))
+        self.failUnless(isinstance(button, Gtk.Button))
         label = children[1]
-        self.failUnless(isinstance(label, gtk.Label))
+        self.failUnless(isinstance(label, Gtk.Label))
 
 unittest.main()
 
